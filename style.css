@@ -1,0 +1,178 @@
+:root {
+    --primary: #013880;
+    --primary-light: #024caa;
+    --accent: #f39c12;
+    --bg: #f0f4f8;
+    --card-bg: #ffffff;
+    --text: #2c3e50;
+    
+    /* Warna Tombol Kuis (Khas Kahoot/Quizizz) */
+    --red: #e21b3c;
+    --blue: #1368ce;
+    --yellow: #d89e00;
+    --green: #26890c;
+}
+
+* {
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background-color: var(--bg);
+    color: var(--text);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.card {
+    background: var(--card-bg);
+    max-width: 550px;
+    width: 100%;
+    padding: 40px 30px;
+    border-radius: 16px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+    text-align: center;
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+h1 { color: var(--primary); margin-bottom: 10px; font-size: 28px; }
+p { color: #7f8c8d; margin-bottom: 25px; }
+
+/* Form & Input */
+.form-group {
+    margin-bottom: 15px;
+    text-align: left;
+}
+label { font-weight: 600; font-size: 14px; color: var(--text); }
+input[type="text"] {
+    width: 100%;
+    padding: 12px 15px;
+    margin-top: 5px;
+    border: 2px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 16px;
+    transition: all 0.3s;
+}
+input[type="text"]:focus {
+    border-color: var(--primary);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(1, 56, 128, 0.15);
+}
+
+/* Tombol-Tombol */
+.btn {
+    width: 100%;
+    padding: 14px;
+    font-size: 16px;
+    font-weight: bold;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: transform 0.1s, background 0.2s;
+    margin-top: 10px;
+    color: white;
+}
+.btn:active { transform: scale(0.98); }
+.btn-primary { background: var(--primary); }
+.btn-primary:hover { background: var(--primary-light); }
+.btn-accent { background: var(--accent); }
+.btn-accent:hover { opacity: 0.9; }
+.btn-danger { background: #e74c3c; }
+
+.divider {
+    margin: 25px 0;
+    position: relative;
+    text-align: center;
+}
+.divider::before {
+    content: "";
+    position: absolute;
+    top: 50%; left: 0; width: 100%; height: 1px;
+    background: #cbd5e1; z-index: 1;
+}
+.divider span {
+    background: var(--card-bg);
+    padding: 0 15px;
+    position: relative;
+    z-index: 2;
+    color: #94a3b8;
+    font-size: 14px;
+}
+
+/* Grid Jawaban Kuis */
+.quiz-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+    margin-top: 25px;
+}
+.btn-quiz {
+    padding: 25px 15px;
+    font-size: 18px;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    font-weight: bold;
+    box-shadow: 0 4px 0 rgba(0,0,0,0.15);
+    transition: all 0.1s;
+}
+.btn-quiz:active { transform: translateY(4px); box-shadow: none; }
+.q-red { background: var(--red); }
+.q-blue { background: var(--blue); }
+.q-yellow { background: var(--yellow); }
+.q-green { background: var(--green); }
+
+/* List Pemain di Lobby */
+.player-list {
+    list-style: none;
+    margin: 20px 0;
+    max-height: 200px;
+    overflow-y: auto;
+}
+.player-list li {
+    background: #f8fafc;
+    padding: 12px;
+    margin-bottom: 8px;
+    border-radius: 8px;
+    border-left: 4px solid var(--primary);
+    text-align: left;
+    font-weight: 600;
+    animation: slideIn 0.3s ease-out;
+}
+
+/* Animasi */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+@keyframes slideIn {
+    from { opacity: 0; transform: translateX(-10px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+/* Tambahan Style untuk Tombol Back */
+.back-header {
+    text-align: left;
+    margin-bottom: 15px;
+}
+.btn-back {
+    background: none;
+    border: none;
+    color: #7f8c8d;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 5px 10px;
+    border-radius: 5px;
+    transition: 0.2s;
+}
+.btn-back:hover {
+    background: #e2e8f0;
+    color: var(--primary);
+}

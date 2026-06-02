@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Papan Skor Akhir</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="card">
+        <h1>🏆 Leaderboard Akhir</h1>
+        <p>Sesi kelas interaktif telah selesai.</p>
+        
+        <div style="background: #fff3cd; padding: 20px; border-radius: 12px; margin-bottom: 20px;">
+            <h3 style="color: #856404;">Skor Anda</h3>
+            <h1 id="final-score-display" style="font-size: 42px; color: #856404;">0</h1>
+        </div>
+
+        <ul class="player-list">
+            <li>🥇 <span id="winner-name">Budi</span> - 2000 Pts</li>
+            <li>🥈 Kamu (<span class="my-name-lbl">Peserta</span>) - <span id="my-score-lbl">0</span> Pts</li>
+            <li>🥉 Andi - 850 Pts</li>
+        </ul>
+
+        <button class="btn btn-primary" onclick="clearAndGoHome()">Kembali ke Halaman Utama</button>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        document.getElementById('final-score-display').innerText = localStorage.getItem('myScore') || 0;
+        document.getElementById('my-score-lbl').innerText = localStorage.getItem('myScore') || 0;
+        document.querySelectorAll('.my-name-lbl').forEach(el => {
+            el.innerText = localStorage.getItem('username') || 'Peserta';
+        });
+        
+        function clearAndGoHome() {
+            localStorage.clear();
+            window.location.href = 'index.html';
+        }
+    </script>
+</body>
+</html>

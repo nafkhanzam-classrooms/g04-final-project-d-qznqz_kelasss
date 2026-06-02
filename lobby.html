@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ruang Tunggu Kelas</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="card">
+        <div class="back-header">
+            <button class="btn-back" onclick="handleGoBack()">← Keluar / Kembali</button>
+        </div>
+
+        <h2 id="lobby-role">Lobby Kelas</h2>
+        <h1 id="lobby-pin" style="font-size: 48px; letter-spacing: 3px; margin: 15px 0; color: var(--accent);">000000</h1>
+        
+        <p id="lobby-status">Menunggu peserta bergabung...</p>
+        
+        <ul class="player-list" id="player-container">
+            </ul>
+
+        <div id="host-panel" style="display: none;">
+            <button class="btn btn-primary" onclick="handleStartQuiz()">Mulai Kuis Sekarang 🚀</button>
+        </div>
+
+        <div id="participant-panel" style="display: none;">
+            </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        initLobbyPage();
+    </script>
+</body>
+</html>
