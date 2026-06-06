@@ -3,41 +3,78 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sesi Kuis Berjalan</title>
+    <title>QuITS</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <div class="card" style="max-width: 700px;">
-        <div class="back-header">
-            <button class="btn-back" onclick="handleGoBack()">← Keluar Sesi</button>
-        </div>
+<div class="card" style="max-width:800px;">
 
-        <h2 id="quiz-title">Pertanyaan Kuis</h2>
-        <hr style="margin: 15px 0; border: 0; height: 1px; background: #cbd5e1;">
-        
-        <h1 id="question-text" style="font-size: 24px; margin: 20px 0;">Menunggu Pertanyaan...</h1>
+    <div class="back-header">
+        <button class="btn-back" onclick="handleGoBack()">← Keluar</button>
+    </div>
 
-        <div id="participant-quiz-space" style="display: none;">
-            <p>Pilih jawaban yang paling tepat di bawah ini:</p>
-            <div class="quiz-grid">
-                <button class="btn-quiz q-red" onclick="handleAnswer('A')">▲ A</button>
-                <button class="btn-quiz q-blue" onclick="handleAnswer('B')">✖ B</button>
-                <button class="btn-quiz q-yellow" onclick="handleAnswer('C')">● C</button>
-                <button class="btn-quiz q-green" onclick="handleAnswer('D')">■ D</button>
-            </div>
-        </div>
+    <h2 id="quiz-title">Sesi Kuis</h2>
 
-        <div id="host-quiz-space" style="display: none; margin-top: 30px;">
-            <p style="margin-bottom: 10px;">Kontrol Sesi:</p>
-            <button class="btn btn-accent" onclick="handleNextQuestion()">Pertanyaan Berikutnya ⏭️</button>
-            <button class="btn btn-danger" onclick="handleEndQuiz()">Akhiri Sesi Kuis 🛑</button>
+    <div id="question-number">
+        Menunggu Kuis Dimulai...
+    </div>
+
+    <hr>
+    <h1 id="question-text">Menyiapkan data...</h1>
+
+    <div id="answer-feedback"></div>
+    <img
+        id="meme-image"
+        src=""
+        alt="meme"
+        style="
+        display:none;
+        max-width:350px;
+        margin:20px auto;
+        border-radius:12px;">
+
+    <div id="participant-quiz-space" style="display:none;">
+        <p>Pilih jawaban:</p>
+        <div class="quiz-grid">
+            <button id="btnA" class="btn-quiz q-red" onclick="handleAnswer('A')">▲ A</button>
+            <button id="btnB" class="btn-quiz q-blue" onclick="handleAnswer('B')">✖ B</button>
+            <button id="btnC" class="btn-quiz q-yellow" onclick="handleAnswer('C')">● C</button>
+            <button id="btnD" class="btn-quiz q-green" onclick="handleAnswer('D')">■ D</button>
         </div>
     </div>
 
-    <script src="app.js"></script>
-    <script>
-        initQuizPage();
-    </script>
+    <div id="participant-temp-leaderboard" style="display:none; text-align:left; background: #fff3cd; padding: 20px; border-radius: 12px; margin-top: 20px;">
+        <h3 style="color: #856404; text-align:center; margin-bottom: 15px;">🏆 Peringkat Sementara</h3>
+        <ul id="participant-temp-list" style="list-style:none; padding:0; margin:0;">
+        </ul>
+    </div>
+
+    <div id="host-quiz-space" style="display:none;">
+        <h3>Kontrol Host</h3>
+        <div style="margin-bottom: 20px;">
+            <button id="next-question-btn" class="btn btn-accent" onclick="handleNextQuestion()">Soal Berikutnya ⏭️</button>
+            <button id="end-quiz-btn" class="btn btn-danger" onclick="handleEndQuiz()" style="margin-left: 10px;">Akhiri Kuis 🛑</button>
+        </div>
+
+        <div style="display: flex; flex-wrap: wrap; gap: 20px; text-align: left;">
+            <div style="flex: 1; min-width: 200px; background: #f8fafc; padding: 15px; border-radius: 12px; border: 2px solid #e2e8f0;">
+                <h4 style="color: var(--primary); margin-bottom: 10px;">⚡ Live Activity</h4>
+                <ul id="live-activity-list" style="list-style:none; max-height:200px; overflow-y:auto; padding:0;">
+                </ul>
+            </div>
+            
+            <div style="flex: 1; min-width: 200px; background: #fff3cd; padding: 15px; border-radius: 12px; border: 2px solid #ffe69c;">
+                <h4 style="color: #856404; margin-bottom: 10px;">🏆 Leaderboard Sementara</h4>
+                <ul id="temp-leaderboard-list" style="list-style:none; max-height:200px; overflow-y:auto; padding:0;">
+                </ul>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script src="app.js"></script>
+
 </body>
 </html>
