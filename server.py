@@ -301,8 +301,6 @@ async def handle_client(websocket):
                 #Trigger Leaderboard Sementara di sisi Peserta
                 leaderboard_payload = build_leaderboard(pin)
                 await broadcast_all(pin, f"TEMP_LEADERBOARD;{pin};SERVER;{leaderboard_payload}")
-                
-                #Jeda Waktu 5 Detik
                 await asyncio.sleep(5)
                 
                 next_index = room["current_question_index"] + 1
