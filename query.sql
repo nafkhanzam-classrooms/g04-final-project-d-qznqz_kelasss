@@ -185,10 +185,3 @@ VALUES
 'I/O Multiplexing',
 'C'
 );
-
--- cek soal di db
-SELECT
-    id,
-    LEFT(question_text, 50) AS soal,
-    correct_answer
-FROM questions;
