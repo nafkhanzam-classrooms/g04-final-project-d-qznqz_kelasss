@@ -7,6 +7,8 @@ CREATE TABLE rooms (
     status ENUM('waiting','started','ended')
         DEFAULT 'waiting',
     current_question_index INT DEFAULT 0,
+    num_questions INT DEFAULT 5,
+    timer_seconds INT DEFAULT 30,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -40,11 +42,15 @@ CREATE TABLE answers (
     question_id INT NOT NULL,
     answer CHAR(1) NOT NULL,
     is_correct BOOLEAN NOT NULL,
+    answer_time_ms INT DEFAULT 0,
+    points_earned INT DEFAULT 0,
+    streak_at_answer INT DEFAULT 0,
     answered_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY(player_id) REFERENCES players(id) ON DELETE CASCADE,
     FOREIGN KEY(question_id) REFERENCES questions(id) ON DELETE CASCADE
 );
 
+drop database quiz_db
 
 -- soal
 INSERT INTO questions

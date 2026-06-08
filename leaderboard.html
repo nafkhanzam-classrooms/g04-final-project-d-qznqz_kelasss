@@ -5,6 +5,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Leaderboard QuITS</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        .scoring-info {
+            background: #f0f4f8;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            font-size: 12px;
+            text-align: left;
+            border-left: 4px solid var(--accent);
+        }
+        .scoring-info h4 {
+            margin-bottom: 10px;
+            color: var(--primary);
+        }
+        .scoring-info p {
+            margin: 5px 0;
+            line-height: 1.5;
+        }
+    </style>
 </head>
 <body>
 
@@ -22,6 +41,14 @@
         style="background:#fff3cd; padding:20px; border-radius:12px; margin-bottom:20px;">
         <h3>Skor Anda</h3>
         <h1 id="final-score-display">0</h1>
+    </div>
+
+    <div class="scoring-info">
+        <h4>📊 Sistem Penilaian:</h4>
+        <p><strong>Poin Dasar:</strong> 3 × timer detik untuk jawaban benar</p>
+        <p><strong>Bonus Waktu:</strong> Jawab dalam 3 detik = poin dasar penuh. Setelah itu: -1 poin per detik</p>
+        <p><strong>Bonus Streak:</strong> Setiap jawaban benar berturut-turut: x1 → x1.125 → x1.25 → x1.375 (dst)</p>
+        <p><strong>Jawaban Salah:</strong> 0 poin + Reset streak ke 0</p>
     </div>
 
     <h3>Peringkat Akhir</h3>

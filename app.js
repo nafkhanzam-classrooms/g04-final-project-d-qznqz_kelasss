@@ -5,6 +5,9 @@ let currentQuestionIndex = 0;
 let transitionLock = false;
 let alreadyAnswered = false;
 let lobbyPlayers = [];
+let questionTimestamp = 0;  // Track when question was shown
+let timerInterval = null;  // Timer for display
+let lobbyRefreshInterval = null;  // Polling for host lobby updates
 
 // ==========================================
 // SESSION STORAGE HELPERS 
@@ -72,9 +75,28 @@ document.addEventListener("DOMContentLoaded", () => {
 function goToLobby() { window.location.href = "lobby.html"; }
 function goToQuiz() { window.location.href = "quiz.html"; }
 function goToLeaderboard() { window.location.href = "leaderboard.html"; }
-function handleGoBack() { clearSession(); window.location.href = "index.html"; }
+
+function handleGoBack() {
+    const role = getRole();
+    const confirmed = confirm(
+        role === "host" 
+            ? "Yakin ingin keluar? Kelas akan dihapus dan semua peserta akan dikeluarkan."
+            : "Yakin ingin keluar dari kelas?"
+    );
+    
+    if (confirmed) {
+        if (role === "host") {
+            sendPacket("DELETE_ROOM", getPin(), getUsername(), "-");
+        } else if (role === "participant") {
+            sendPacket("LEAVE", getPin(), getUsername(), "-");
+        }
+        clearSession();
+        window.location.href = "index.html";
+    }
+}
+
 function clearAndGoHome() {
-    if (confirm("Yakin ingin keluar? Semua data sesi akan hilang.")) {
+    if (confirm("Yakin ingin kelar dari kuis? Hasil tidak akan disimpan.")) {
         clearSession();
         window.location.href = "index.html";
     }
@@ -100,6 +122,7 @@ function handleServerMessage(event) {
         case "PLAYER_JOINED": onPlayerJoined(sender); break;
         case "PLAYER_LEFT": onPlayerLeft(sender); break;
         case "PLAYER_LIST": onPlayerList(payload); break;
+        case "ROOM_DELETED": onRoomDeleted(payload); break;
         case "QUIZ_STARTED": onQuizStarted(); break;
         case "SHOW_QUESTION": onShowQuestion(payload); break;
         case "ANSWER_RESULT": onAnswerResult(payload); break;
@@ -178,13 +201,34 @@ async function initLobbyPage() {
 
     if(role === "host") {
         document.getElementById("host-panel").style.display = "block";
+        // Get initial player list (no more polling - will update via PLAYER_JOINED/PLAYER_LEFT broadcasts)
         sendPacket("GET_PLAYERS", getPin(), getUsername(), "-");
+
+        // Add event listener for timer settings
+        const timerInput = document.getElementById("timer-seconds");
+        if(timerInput) {
+            timerInput.addEventListener("change", updateMaxPointsDisplay);
+            timerInput.addEventListener("input", updateMaxPointsDisplay);
+            updateMaxPointsDisplay();
+        }
     } else {
         document.getElementById("participant-panel").style.display = "block";
         const pc = document.getElementById("player-container");
         if(pc) pc.innerHTML = "<li style='text-align:center; list-style:none;'>Semangat ya! 👀</li>";
         const count = document.getElementById("participant-count");
         if(count) count.style.display = "none";
+    }
+}
+
+function updateMaxPointsDisplay() {
+    const timerInput = document.getElementById("timer-seconds");
+    if(!timerInput) return;
+    
+    const timerSeconds = parseInt(timerInput.value) || 30;
+    // Display formula instead of exact value
+    const display = document.getElementById("max-points-display");
+    if(display) {
+        display.innerText = `3 × ${timerSeconds}`;
     }
 }
 
@@ -210,12 +254,22 @@ function onPlayerJoined(username) {
     if (getRole() !== "host") return; 
     if (!lobbyPlayers.includes(username)) lobbyPlayers.push(username);
     renderPlayerList();
+    // Request fresh player list to ensure accuracy
+    sendPacket("GET_PLAYERS", getPin(), getUsername(), "-");
 }
 
 function onPlayerLeft(username) {
     if (getRole() !== "host") return;
     lobbyPlayers = lobbyPlayers.filter(p => p !== username);
     renderPlayerList();
+    // Request fresh player list to ensure accuracy
+    sendPacket("GET_PLAYERS", getPin(), getUsername(), "-");
+}
+
+function onRoomDeleted(payload) {
+    alert("Kelas telah dihapus.");
+    clearSession();
+    window.location.href = "index.html";
 }
 
 function onPlayerList(payload) {
@@ -226,7 +280,23 @@ function onPlayerList(payload) {
 
 function handleStartQuiz() {
     if(getRole() !== "host") return;
-    sendPacket("START_QUIZ", getPin(), getUsername(), "-");
+    
+    // Validate at least 1 player joined
+    if(lobbyPlayers.length === 0) return alert("Minimal 1 peserta harus bergabung sebelum memulai kuis");
+    
+    const numQuestions = parseInt(document.getElementById("num-questions")?.value) || 5;
+    const timerSeconds = parseInt(document.getElementById("timer-seconds")?.value) || 30;
+    
+    // Validate inputs
+    if(numQuestions < 1) return alert("Jumlah soal minimal 1");
+    if(timerSeconds < 5) return alert("Timer minimal 5 detik");
+    
+    // Store settings in sessionStorage for reference
+    sessionStorage.setItem("numQuestions", numQuestions);
+    sessionStorage.setItem("timerSeconds", timerSeconds);
+    
+    // Send settings with START_QUIZ
+    sendPacket("START_QUIZ", getPin(), getUsername(), `${numQuestions}|${timerSeconds}`);
 }
 
 // ==========================================
@@ -234,6 +304,13 @@ function handleStartQuiz() {
 // ==========================================
 function onQuizStarted() {
     sessionStorage.setItem("quizStarted", "true");
+    
+    // Stop lobby polling
+    if(lobbyRefreshInterval) {
+        clearInterval(lobbyRefreshInterval);
+        lobbyRefreshInterval = null;
+    }
+    
     const page = window.location.pathname.split("/").pop();
     if (page !== "quiz.html") goToQuiz();
 }
@@ -306,6 +383,8 @@ function onShowQuestion(payload) {
     if(parts.length < 6) return;
 
     currentQuestionIndex = parseInt(parts[0]);
+    questionTimestamp = parts.length > 6 ? parseInt(parts[6]) : Date.now();  // Get server timestamp or use local
+    
     document.getElementById("question-number").innerText = `Soal #${currentQuestionIndex + 1}`;
     document.getElementById("question-text").innerText = parts[1];
     document.getElementById("btnA").innerText = `▲ ${parts[2]}`;
@@ -316,6 +395,22 @@ function onShowQuestion(payload) {
     // Kosongkan log per soal
     const feed = document.getElementById("live-activity-list");
     if(feed) feed.innerHTML = "";
+    
+    // Start timer display for participants
+    if(getRole() === "participant") {
+        const timerDisplay = document.getElementById("timer-display");
+        if(timerDisplay) timerDisplay.style.display = "block";
+        
+        // Clear previous timer
+        if(timerInterval) clearInterval(timerInterval);
+        
+        // Start new timer
+        timerInterval = setInterval(() => {
+            const elapsed = (Date.now() - questionTimestamp) / 1000;
+            const timerElement = document.getElementById("timer");
+            if(timerElement) timerElement.innerText = elapsed.toFixed(1);
+        }, 100);
+    }
 }
 
 function handleAnswer(answer) {
@@ -325,7 +420,15 @@ function handleAnswer(answer) {
         const btn = document.getElementById(id);
         if(btn) btn.disabled = true;
     });
-    sendPacket("ANSWER", getPin(), getUsername(), `${currentQuestionIndex}|${answer}`);
+    
+    // Stop timer
+    if(timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+    }
+    
+    const answerTimestamp = Date.now();  // Get current time in milliseconds
+    sendPacket("ANSWER", getPin(), getUsername(), `${currentQuestionIndex}|${answer}|${answerTimestamp}`);
 }
 
 function onAnswerResult(payload) {
@@ -333,17 +436,36 @@ function onAnswerResult(payload) {
     const status = parts[0];
     const score = parts[1];
     const streak = parts[2];
+    const basePoints = parts.length > 3 ? parseInt(parts[3]) : 0;
+    const streakBonus = parts.length > 4 ? parseInt(parts[4]) : 0;
+    const answerTimeMs = parts.length > 5 ? parseInt(parts[5]) : 0;
+    const multiplier = parts.length > 6 ? parseFloat(parts[6]) : 1.0;
     
     sessionStorage.setItem("myScore", score);
     const feedback = document.getElementById("answer-feedback");
     const meme = document.getElementById("meme-image");
+    const timerDisplay = document.getElementById("timer-display");
     
     if(!feedback) return;
+    
+    // Hide timer
+    if(timerDisplay) timerDisplay.style.display = "none";
+    
+    const timeSeconds = (answerTimeMs / 1000).toFixed(2);
+    
     if(status === "CORRECT") {
-        feedback.innerHTML = `<h3 style="color:var(--green);">✅ Benar!</h3><p>🔥 Streak: ${streak}</p>`;
+        feedback.innerHTML = `
+            <h3 style="color:var(--green);">✅ Benar!</h3>
+            <p style="margin: 10px 0; font-weight: bold; font-size: 24px; color: var(--green);">+${streakBonus} 🔥</p>
+            <p style="margin: 5px 0; font-size: 14px; color: var(--primary);">Streak: ${streak}</p>
+        `;
         meme.src = `assets/correct/correct${Math.floor(Math.random()*3)+1}.jpg`;
     } else {
-        feedback.innerHTML = `<h3 style="color:var(--red);">❌ Salah!</h3><p>🔥 Streak: ${streak}</p>`;
+        feedback.innerHTML = `
+            <h3 style="color:var(--red);">❌ Salah!</h3>
+            <p style="margin: 10px 0; font-weight: bold; font-size: 24px; color: var(--red);">+0 pts</p>
+            <p style="margin: 5px 0; font-size: 14px; color: #e74c3c;">Streak reset</p>
+        `;
         meme.src = `assets/wrong/wrong${Math.floor(Math.random()*3)+1}.jpg`;
     }
     meme.style.display = "block";
