@@ -19,6 +19,7 @@ logging.basicConfig(
     level=logging.INFO,
     format="[%(asctime)s] %(levelname)s : %(message)s"
 )
+logging.getLogger("websockets").setLevel(logging.WARNING)
 
 active_rooms = {}
 
@@ -248,7 +249,7 @@ async def handle_client(websocket):
                 client_pin, client_username, client_role = room_pin, username, "host"
 
                 await safe_send(websocket, f"ROOM_CREATED;{room_pin};{username};{token}")
-                logging.info(f"Room {room_pin} dibuat")
+                logging.info(f"{username} membuat room {room_pin}")
 
             elif action == "JOIN":
                 if pin not in active_rooms:
@@ -276,6 +277,8 @@ async def handle_client(websocket):
 
                 await safe_send(websocket, f"JOIN_SUCCESS;{pin};{username};{token}")
                 await safe_send(active_rooms[pin]["host"], f"PLAYER_JOINED;{pin};{username};-")
+
+                logging.info(f"Player {username} bergabung di room {pin}")
 
             elif action == "RESUME":
                 token = payload
@@ -324,6 +327,7 @@ async def handle_client(websocket):
                 cursor.execute("SELECT username FROM players WHERE room_id=%s AND role='participant' AND is_active=TRUE", (room_id,))
                 players = [p["username"] for p in cursor.fetchall()]
                 await safe_send(websocket, f"PLAYER_LIST;{pin};SERVER;{','.join(players)}")
+                # logging.info(f"{username} meminta daftar pemain aktif di room {pin}")
                 cursor.close(); db.close()
 
             elif action == "START_QUIZ":
@@ -349,6 +353,7 @@ async def handle_client(websocket):
                 
                 await broadcast_all(pin, f"QUIZ_STARTED;{pin};SERVER;-")
                 await send_question_to_room(pin, 0)
+                logging.info(f"{username} memulai quiz di room {pin}")
 
             elif action == "ANSWER":
                 if client_role != "participant": continue
@@ -399,6 +404,7 @@ async def handle_client(websocket):
                         
                         room = active_rooms.get(pin)
                         if room: await safe_send(room["host"], f"PLAYER_ANSWERED;{pin};{username};-")
+                        logging.info(f"Player {username} di room {pin} menjawab '{answer}' untuk pertanyaan {q_index} - {'CORRECT' if is_correct else 'WRONG'}")
                         
                         # Update Leaderboard Sementara di Host 
                         leaderboard_payload = build_leaderboard(pin)
@@ -410,8 +416,30 @@ async def handle_client(websocket):
                 if client_role != "host": continue
                 room = active_rooms[pin]
                 
+                room_id = get_room_id(pin)
+                current_idx = room["current_question_index"]
+                current_q = get_question(current_idx)
+                
+                # Reset streak untuk peserta yang melewatkan soal ini (tidak menjawab)
+                if room_id and current_q:
+                    db = get_db()
+                    cursor = db.cursor()
+                    # Cari pemain yang belum menjawab pertanyaan ini
+                    cursor.execute("SELECT username FROM players WHERE room_id = %s AND role = 'participant' AND id NOT IN (SELECT player_id FROM answers WHERE question_id = %s)", (room_id, current_q["id"]))
+                    players_missed = cursor.fetchall()
+                    for row in players_missed:
+                        p_username = row[0]
+                        logging.info(f"Streak di-reset untuk player {p_username} yang melewatkan pertanyaan {current_idx} di room {pin}")
+
+                    # Reset streak ke 0 
+                    cursor.execute("UPDATE players SET streak = 0 WHERE room_id = %s AND role = 'participant' AND id NOT IN (SELECT player_id FROM answers WHERE question_id = %s)", (room_id, current_q["id"]))
+                    db.commit()
+                    cursor.close()
+                    db.close()
+
                 #Trigger Leaderboard Sementara di sisi Peserta
                 leaderboard_payload = build_leaderboard(pin)
+                logging.info(f"Memperbarui leaderboard sementara untuk room {pin}")
                 await broadcast_all(pin, f"TEMP_LEADERBOARD;{pin};SERVER;{leaderboard_payload}")
                 await asyncio.sleep(5)
                 
@@ -421,8 +449,11 @@ async def handle_client(websocket):
                 #Cek apakah ini soal terakhir (based on num_questions setting)
                 if next_index >= num_questions:
                     final_payload = build_final_leaderboard(pin)
+                    logging.info(f"{username} mencapai akhir quiz di room {pin}")
                     await broadcast_all(pin, f"FINAL_LEADERBOARD;{pin};SERVER;{final_payload}")
+                    logging.info(f"Final leaderboard untuk room {pin}: {final_payload}")
                     await broadcast_all(pin, f"QUIZ_ENDED;{pin};SERVER;-")
+                    logging.info(f"Quiz berakhir untuk room {pin}")
                     
                     # Cleanup: Delete room and all players from database
                     delete_room_from_db(pin)
@@ -439,12 +470,16 @@ async def handle_client(websocket):
                 cursor.execute("UPDATE rooms SET current_question_index=%s WHERE pin=%s", (next_index, pin))
                 db.commit(); cursor.close(); db.close()
                 await send_question_to_room(pin, next_index)
+                logging.info(f"{username} pindah ke pertanyaan berikutnya {next_index} in room {pin}")
 
             elif action == "END_QUIZ":
                 if client_role != "host": continue
                 final_payload = build_final_leaderboard(pin)
+                logging.info(f"{username} mengakhiri quiz di room {pin}")
                 await broadcast_all(pin, f"FINAL_LEADERBOARD;{pin};SERVER;{final_payload}")
+                logging.info(f"Final leaderboard untuk room {pin}: {final_payload}")
                 await broadcast_all(pin, f"QUIZ_ENDED;{pin};SERVER;-")
+                logging.info(f"Quiz berakhir untuk room {pin}")
                 
                 # Cleanup: Delete room and all players from database
                 delete_room_from_db(pin)
@@ -456,6 +491,7 @@ async def handle_client(websocket):
             elif action == "DELETE_ROOM":
                 # Host wants to leave and delete the room
                 if client_role != "host": continue
+                logging.info(f"{username} menghapus room {pin}")
                 
                 # Notify all players that room is deleted
                 if pin in active_rooms:
@@ -469,12 +505,12 @@ async def handle_client(websocket):
                 # Clean up active rooms
                 if pin in active_rooms:
                     del active_rooms[pin]
-                logging.info(f"Room {pin} deleted by host")
 
             elif action == "LEAVE":
                 # Participant wants to leave the room
                 if client_role != "participant": continue
-                
+                logging.info(f"Player {username} meninggalkan room {pin}")
+
                 room_id = get_room_id(pin)
                 if room_id:
                     db = get_db()
@@ -491,7 +527,6 @@ async def handle_client(websocket):
                         del room["players"][username]
                     if room["host"]:
                         await safe_send(room["host"], f"PLAYER_LEFT;{pin};{username};-")
-                logging.info(f"Player {username} left room {pin}")
 
             elif action == "PING":
                 room_id = get_room_id(pin)
@@ -535,6 +570,7 @@ async def main():
     restore_rooms_from_db()
     asyncio.create_task(timeout_cleaner())
     async with websockets.serve(handle_client, HOST, PORT):
+        logging.info("🚀 Server Quiz berjalan di ws://localhost:8765")
         await asyncio.Future()
 
 if __name__ == "__main__":
