@@ -1,85 +1,135 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>QuITS</title>
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
-<div class="card" style="max-width:800px;">
+    <div class="card" style="max-width:800px;">
 
-    <div class="back-header">
-        <button class="btn-back" onclick="handleGoBack()">← Keluar</button>
-    </div>
+        <div class="back-header">
+            <button class="btn-back" onclick="handleGoBack()">← Keluar</button>
+        </div>
 
-    <h2 id="quiz-title">Sesi Kuis</h2>
+        <h2 id="quiz-title">Sesi Kuis</h2>
 
-    <div id="question-number">
-        Menunggu Kuis Dimulai...
-    </div>
+        <div id="question-number">
+            Menunggu Kuis Dimulai...
+        </div>
 
-    <!-- Timer untuk tracking waktu jawab -->
-    <div id="timer-display" style="display:none; margin: 10px 0; padding: 10px; background: #f0f0f0; border-radius: 8px; font-weight: bold; text-align: center;">
-        ⏱️ <span id="timer">0.0</span>s
-    </div>
+        <div id="screenshare-container"
+            style="display: none; margin: 20px 0; background: #000; border-radius: 12px; padding: 10px; position: relative;">
+            <p id="screen-sharer-name"
+                style="color: #fff; font-size: 13px; font-weight: bold; margin-bottom: 8px; text-align: left;"></p>
+            <video id="remote-screen-video" autoplay playsinline
+                style="width: 100%; max-height: 420px; border-radius: 8px; background: #1a1a1a;"></video>
+        </div>
 
-    <hr>
-    <h1 id="question-text">Menyiapkan data...</h1>
+        <div id="timer-display"
+            style="display:none; margin: 10px 0; padding: 10px; background: #f0f0f0; border-radius: 8px; font-weight: bold; text-align: center;">
+            ⏱️ <span id="timer">0.0</span>s
+        </div>
 
-    <div id="answer-feedback"></div>
-    <img
-        id="meme-image"
-        src=""
-        alt="meme"
-        style="
+        <hr>
+        <h1 id="question-text">Menyiapkan data...</h1>
+
+        <div id="answer-feedback"></div>
+        <img id="meme-image" src="" alt="meme" style="
         display:none;
         max-width:350px;
         margin:20px auto;
         border-radius:12px;">
 
-    <div id="participant-quiz-space" style="display:none;">
-        <p>Pilih jawaban:</p>
-        <div class="quiz-grid">
-            <button id="btnA" class="btn-quiz q-red" onclick="handleAnswer('A')">▲ A</button>
-            <button id="btnB" class="btn-quiz q-blue" onclick="handleAnswer('B')">✖ B</button>
-            <button id="btnC" class="btn-quiz q-yellow" onclick="handleAnswer('C')">● C</button>
-            <button id="btnD" class="btn-quiz q-green" onclick="handleAnswer('D')">■ D</button>
-        </div>
-    </div>
+        <div id="participant-quiz-space" style="display:none;">
+            <button id="student-share-btn" class="btn btn-accent" style="display:none; margin-bottom: 15px;"
+                onclick="toggleLocalShare()">Share Screen Saya 🖥️</button>
 
-    <div id="participant-temp-leaderboard" style="display:none; text-align:left; background: #fff3cd; padding: 20px; border-radius: 12px; margin-top: 20px;">
-        <h3 style="color: #856404; text-align:center; margin-bottom: 15px;">🏆 Peringkat Sementara</h3>
-        <ul id="participant-temp-list" style="list-style:none; padding:0; margin:0;">
-        </ul>
-    </div>
-
-    <div id="host-quiz-space" style="display:none;">
-        <h3>Kontrol Host</h3>
-        <div style="margin-bottom: 20px;">
-            <button id="next-question-btn" class="btn btn-accent" onclick="handleNextQuestion()">Soal Berikutnya ⏭️</button>
-            <button id="end-quiz-btn" class="btn btn-danger" onclick="handleEndQuiz()" style="margin-left: 10px;">Akhiri Kuis 🛑</button>
-        </div>
-
-        <div style="display: flex; flex-wrap: wrap; gap: 20px; text-align: left;">
-            <div style="flex: 1; min-width: 200px; background: #f8fafc; padding: 15px; border-radius: 12px; border: 2px solid #e2e8f0;">
-                <h4 style="color: var(--primary); margin-bottom: 10px;">⚡ Live Activity</h4>
-                <ul id="live-activity-list" style="list-style:none; max-height:200px; overflow-y:auto; padding:0;">
-                </ul>
+            <div class="reaction-bar"
+                style="margin-bottom: 20px; display: flex; gap: 10px; justify-content: center; background: #f1f5f9; padding: 10px; border-radius: 12px;">
+                <button class="btn-reaction" onclick="sendReaction('👍')">👍</button>
+                <button class="btn-reaction" onclick="sendReaction('🔥')">🔥</button>
+                <button class="btn-reaction" onclick="sendReaction('🤔')">🤔</button>
+                <button class="btn-reaction" onclick="sendReaction('😮')">😮</button>
+                <button id="raise-hand-btn" class="btn-reaction" onclick="toggleRaiseHand()"
+                    style="background: #cbd5e1; border-radius: 8px; padding: 4px 10px;">✋ Angkat Tangan</button>
             </div>
-            
-            <div style="flex: 1; min-width: 200px; background: #fff3cd; padding: 15px; border-radius: 12px; border: 2px solid #ffe69c;">
-                <h4 style="color: #856404; margin-bottom: 10px;">🏆 Leaderboard Sementara</h4>
-                <ul id="temp-leaderboard-list" style="list-style:none; max-height:200px; overflow-y:auto; padding:0;">
-                </ul>
+
+            <p>Pilih jawaban:</p>
+            <div class="quiz-grid">
+                <button id="btnA" class="btn-quiz q-red" onclick="handleAnswer('A')">▲ A</button>
+                <button id="btnB" class="btn-quiz q-blue" onclick="handleAnswer('B')">✖ B</button>
+                <button id="btnC" class="btn-quiz q-yellow" onclick="handleAnswer('C')">● C</button>
+                <button id="btnD" class="btn-quiz q-green" onclick="handleAnswer('D')">■ D</button>
             </div>
         </div>
+
+        <div id="participant-temp-leaderboard"
+            style="display:none; text-align:left; background: #fff3cd; padding: 20px; border-radius: 12px; margin-top: 20px;">
+            <h3 style="color: #856404; text-align:center; margin-bottom: 15px;">🏆 Peringkat Sementara</h3>
+            <ul id="participant-temp-list" style="list-style:none; padding:0; margin:0;">
+            </ul>
+        </div>
+
+        <div id="host-quiz-space" style="display:none;">
+            <h3>Kontrol Host</h3>
+            <div style="margin-bottom: 20px; display: flex; gap: 10px; justify-content: center;">
+                <button id="host-share-btn" class="btn btn-primary" onclick="toggleLocalShare()"
+                    style="margin-top:10px; width: auto;">Share Screen 🖥️</button>
+                <button id="next-question-btn" class="btn btn-accent" onclick="handleNextQuestion()"
+                    style="margin-top:10px; width: auto;">Soal Berikutnya ⏭️</button>
+                <button id="end-quiz-btn" class="btn btn-danger" onclick="handleEndQuiz()"
+                    style="margin-top:10px; width: auto;">Akhiri Kuis 🛑</button>
+            </div>
+
+            <div
+                style="margin-bottom: 20px; background: #f1f5f9; padding: 15px; border-radius: 12px; border-left: 4px solid var(--primary); text-align: left;">
+                <h4 style="font-size: 14px; margin-bottom: 8px; color: var(--text);">🔑 Otorisasi Share Screen Peserta
+                </h4>
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" id="input-target-share" placeholder="Masukkan nama mahasiswa..."
+                        style="margin-top:0; padding: 10px 12px; font-size: 14px; flex: 1;">
+                    <button class="btn btn-primary" onclick="handleGrantShare(1)"
+                        style="margin-top:0; width:auto; padding: 10px 20px; font-size: 14px;">Izinkan</button>
+                    <button class="btn btn-danger" onclick="handleGrantShare(0)"
+                        style="margin-top:0; width:auto; padding: 10px 20px; font-size: 14px;">Cabut</button>
+                </div>
+            </div>
+
+            <div style="display: flex; flex-wrap: wrap; gap: 20px; text-align: left;">
+                <div
+                    style="flex: 1; min-width: 200px; background: #f8fafc; padding: 15px; border-radius: 12px; border: 2px solid #e2e8f0;">
+                    <h4 style="color: var(--primary); margin-bottom: 10px;">⚡ Live Activity</h4>
+                    <ul id="live-activity-list" style="list-style:none; max-height:200px; overflow-y:auto; padding:0;">
+                    </ul>
+                </div>
+
+                <div
+                    style="flex: 1; min-width: 200px; background: #fff3cd; padding: 15px; border-radius: 12px; border: 2px solid #ffe69c;">
+                    <h4 style="color: #856404; margin-bottom: 10px;">🏆 Leaderboard Sementara</h4>
+                    <ul id="temp-leaderboard-list"
+                        style="list-style:none; max-height:200px; overflow-y:auto; padding:0;">
+                    </ul>
+                </div>
+            </div>
+        </div>
+
     </div>
-
-</div>
-
-<script src="app.js"></script>
+    <div id="clicker-box"
+        style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 9999; background: var(--accent); padding: 25px; border-radius: 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.3); text-align: center; animation: bounceIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
+        <h3 style="color: white; margin-bottom: 6px;">⚡ FOCUS CHECK! ⚡</h3>
+        <p style="color: white; margin-bottom: 16px; font-size: 13px; opacity: 0.9;">Ketuk tombol di bawah secepat
+            kilat!</p>
+        <button class="btn"
+            style="background: white; color: var(--accent); margin-top: 0; padding: 12px 30px; font-size: 18px; border-radius: 14px; width: auto;"
+            onclick="hitClicker()">TAP SEKARANG! 🌟</button>
+    </div>
+    <script src="app.js"></script>
 
 </body>
+
 </html>

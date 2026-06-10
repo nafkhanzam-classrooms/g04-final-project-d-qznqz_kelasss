@@ -27,12 +27,6 @@ active_rooms = {}
 # SCORING LOGIC
 # ==========================================================
 def calculate_points(answer_time_ms: int, is_correct: bool, timer_seconds: int = 30) -> int:
-    """
-    Calculate points based on answer time and timer setting.
-    - Base: 3 × timer_seconds (e.g., 30 sec × 3 = 90 max points)
-    - First 3 seconds: full base points
-    - After 3 seconds: base_points - (time_ms - 3000) / 1000 points
-    """
     if not is_correct:
         return 0
     
@@ -42,22 +36,15 @@ def calculate_points(answer_time_ms: int, is_correct: bool, timer_seconds: int =
     if time_seconds <= 3:
         return base_points
     else:
-        # -1 point per second after 3 seconds
         points = base_points - int(time_seconds - 3)
         return max(0, points)
 
 def calculate_streak_multiplier(streak: int) -> float:
-    """
-    Calculate streak multiplier.
-    1st streak: x1, 2nd: x1.125, 3rd: x1.25, etc.
-    Formula: 1.0 + (streak - 1) * 0.125
-    """
     if streak <= 0:
         return 1.0
     return 1.0 + (streak - 1) * 0.125
 
 def calculate_final_score(base_points: int, streak: int) -> int:
-    """Calculate final score with streak multiplier"""
     multiplier = calculate_streak_multiplier(streak)
     final = int(base_points * multiplier)
     return final
@@ -131,7 +118,7 @@ async def safe_send(ws, message):
     if ws is None: return
     try:
         await ws.send(message)
-    except Exception as e:
+    except Exception:
         pass
 
 async def broadcast_all(pin, message):
@@ -160,28 +147,18 @@ def build_final_leaderboard(pin):
     return build_leaderboard(pin)
 
 def delete_room_from_db(pin):
-    """Delete room and all associated data from database"""
     try:
         room_id = get_room_id(pin)
         if not room_id:
             return
-        
         db = get_db()
         cursor = db.cursor()
-        
-        # Delete answers (cascade will handle via foreign key)
         cursor.execute("DELETE FROM answers WHERE player_id IN (SELECT id FROM players WHERE room_id=%s)", (room_id,))
-        
-        # Delete players (cascade will be handled)
         cursor.execute("DELETE FROM players WHERE room_id=%s", (room_id,))
-        
-        # Delete room
         cursor.execute("DELETE FROM rooms WHERE id=%s", (room_id,))
-        
         db.commit()
         cursor.close()
         db.close()
-        
         logging.info(f"Room {pin} dan semua data peserta dihapus dari database")
     except Exception as e:
         logging.error(f"Error deleting room {pin}: {e}")
@@ -201,7 +178,7 @@ def restore_rooms_from_db():
             "current_question_index": room["current_question_index"],
             "num_questions": room["num_questions"],
             "timer_seconds": room["timer_seconds"],
-            "question_timestamp": 0  # Track when question was sent
+            "question_timestamp": 0
         }
     logging.info(f"{len(rooms)} room dipulihkan dari database")
 
@@ -209,8 +186,7 @@ async def send_question_to_room(pin, index):
     question = get_question(index)
     if not question: return False
     
-    # Track question timestamp
-    question_timestamp = int(time.time() * 1000)  # milliseconds
+    question_timestamp = int(time.time() * 1000)
     if pin in active_rooms:
         active_rooms[pin]["question_timestamp"] = question_timestamp
     
@@ -277,7 +253,6 @@ async def handle_client(websocket):
 
                 await safe_send(websocket, f"JOIN_SUCCESS;{pin};{username};{token}")
                 await safe_send(active_rooms[pin]["host"], f"PLAYER_JOINED;{pin};{username};-")
-
                 logging.info(f"Player {username} bergabung di room {pin}")
 
             elif action == "RESUME":
@@ -327,13 +302,10 @@ async def handle_client(websocket):
                 cursor.execute("SELECT username FROM players WHERE room_id=%s AND role='participant' AND is_active=TRUE", (room_id,))
                 players = [p["username"] for p in cursor.fetchall()]
                 await safe_send(websocket, f"PLAYER_LIST;{pin};SERVER;{','.join(players)}")
-                # logging.info(f"{username} meminta daftar pemain aktif di room {pin}")
                 cursor.close(); db.close()
 
             elif action == "START_QUIZ":
                 if client_role != "host": continue
-                
-                # Parse settings from payload
                 settings = payload.split("|") if payload != "-" else []
                 num_questions = int(settings[0]) if len(settings) > 0 else 5
                 timer_seconds = int(settings[1]) if len(settings) > 1 else 30
@@ -370,27 +342,16 @@ async def handle_client(websocket):
                     cursor.execute("SELECT id FROM answers WHERE player_id=%s AND question_id=%s", (player["id"], question["id"]))
                     if not cursor.fetchone():
                         is_correct = (answer == question["correct_answer"])
-                        
-                        # Calculate answer time in milliseconds
                         question_ts = active_rooms.get(pin, {}).get("question_timestamp", 0)
                         answer_ts = int(answer_timestamp)
-                        answer_time_ms = answer_ts - question_ts
-                        answer_time_ms = max(0, answer_time_ms)  # Ensure non-negative
-                        
-                        # Get timer setting from room
+                        answer_time_ms = max(0, answer_ts - question_ts)
                         timer_seconds = active_rooms.get(pin, {}).get("timer_seconds", 30)
                         
-                        # Calculate base points with timer setting
                         base_points = calculate_points(answer_time_ms, is_correct, timer_seconds)
-                        
-                        # Update streak
                         new_streak = player["streak"] + 1 if is_correct else 0
-                        
-                        # Calculate final score with streak multiplier
                         streak_bonus = calculate_final_score(base_points, new_streak)
                         new_score = player["score"] + streak_bonus
                         
-                        # Save to database
                         cursor.execute(
                             "INSERT INTO answers (player_id, question_id, answer, is_correct, answer_time_ms, points_earned, streak_at_answer) VALUES (%s, %s, %s, %s, %s, %s, %s)",
                             (player["id"], question["id"], answer, is_correct, answer_time_ms, streak_bonus, player["streak"] + 1 if is_correct else 0)
@@ -404,9 +365,7 @@ async def handle_client(websocket):
                         
                         room = active_rooms.get(pin)
                         if room: await safe_send(room["host"], f"PLAYER_ANSWERED;{pin};{username};-")
-                        logging.info(f"Player {username} di room {pin} menjawab '{answer}' untuk pertanyaan {q_index} - {'CORRECT' if is_correct else 'WRONG'}")
                         
-                        # Update Leaderboard Sementara di Host 
                         leaderboard_payload = build_leaderboard(pin)
                         await broadcast_all(pin, f"LEADERBOARD_DATA;{pin};SERVER;{leaderboard_payload}")
 
@@ -415,53 +374,37 @@ async def handle_client(websocket):
             elif action == "NEXT_QUESTION":
                 if client_role != "host": continue
                 room = active_rooms[pin]
-                
                 room_id = get_room_id(pin)
                 current_idx = room["current_question_index"]
                 current_q = get_question(current_idx)
                 
-                # Reset streak untuk peserta yang melewatkan soal ini (tidak menjawab)
                 if room_id and current_q:
                     db = get_db()
                     cursor = db.cursor()
-                    # Cari pemain yang belum menjawab pertanyaan ini
                     cursor.execute("SELECT username FROM players WHERE room_id = %s AND role = 'participant' AND id NOT IN (SELECT player_id FROM answers WHERE question_id = %s)", (room_id, current_q["id"]))
                     players_missed = cursor.fetchall()
                     for row in players_missed:
                         p_username = row[0]
                         logging.info(f"Streak di-reset untuk player {p_username} yang melewatkan pertanyaan {current_idx} di room {pin}")
 
-                    # Reset streak ke 0 
                     cursor.execute("UPDATE players SET streak = 0 WHERE room_id = %s AND role = 'participant' AND id NOT IN (SELECT player_id FROM answers WHERE question_id = %s)", (room_id, current_q["id"]))
                     db.commit()
-                    cursor.close()
-                    db.close()
+                    cursor.close(); db.close()
 
-                #Trigger Leaderboard Sementara di sisi Peserta
                 leaderboard_payload = build_leaderboard(pin)
-                logging.info(f"Memperbarui leaderboard sementara untuk room {pin}")
                 await broadcast_all(pin, f"TEMP_LEADERBOARD;{pin};SERVER;{leaderboard_payload}")
                 await asyncio.sleep(5)
                 
                 next_index = room["current_question_index"] + 1
                 num_questions = room.get("num_questions", 5)
 
-                #Cek apakah ini soal terakhir (based on num_questions setting)
                 if next_index >= num_questions:
                     final_payload = build_final_leaderboard(pin)
-                    logging.info(f"{username} mencapai akhir quiz di room {pin}")
                     await broadcast_all(pin, f"FINAL_LEADERBOARD;{pin};SERVER;{final_payload}")
-                    logging.info(f"Final leaderboard untuk room {pin}: {final_payload}")
                     await broadcast_all(pin, f"QUIZ_ENDED;{pin};SERVER;-")
-                    logging.info(f"Quiz berakhir untuk room {pin}")
-                    
-                    # Cleanup: Delete room and all players from database
                     delete_room_from_db(pin)
                     room["status"] = "ended"
-                    
-                    # Remove from active rooms
-                    if pin in active_rooms:
-                        del active_rooms[pin]
+                    if pin in active_rooms: del active_rooms[pin]
                     continue
 
                 room["current_question_index"] = next_index
@@ -470,63 +413,39 @@ async def handle_client(websocket):
                 cursor.execute("UPDATE rooms SET current_question_index=%s WHERE pin=%s", (next_index, pin))
                 db.commit(); cursor.close(); db.close()
                 await send_question_to_room(pin, next_index)
-                logging.info(f"{username} pindah ke pertanyaan berikutnya {next_index} in room {pin}")
 
             elif action == "END_QUIZ":
                 if client_role != "host": continue
                 final_payload = build_final_leaderboard(pin)
-                logging.info(f"{username} mengakhiri quiz di room {pin}")
                 await broadcast_all(pin, f"FINAL_LEADERBOARD;{pin};SERVER;{final_payload}")
-                logging.info(f"Final leaderboard untuk room {pin}: {final_payload}")
                 await broadcast_all(pin, f"QUIZ_ENDED;{pin};SERVER;-")
-                logging.info(f"Quiz berakhir untuk room {pin}")
-                
-                # Cleanup: Delete room and all players from database
                 delete_room_from_db(pin)
-                
                 if pin in active_rooms:
                     active_rooms[pin]["status"] = "ended"
                     del active_rooms[pin]
 
             elif action == "DELETE_ROOM":
-                # Host wants to leave and delete the room
                 if client_role != "host": continue
-                logging.info(f"{username} menghapus room {pin}")
-                
-                # Notify all players that room is deleted
                 if pin in active_rooms:
                     room = active_rooms[pin]
-                    for player_name, player_socket in list(room["players"].items()):
+                    for player_socket in list(room["players"].values()):
                         await safe_send(player_socket, f"ROOM_DELETED;{pin};SERVER;Host left the room")
-                
-                # Delete room from database
                 delete_room_from_db(pin)
-                
-                # Clean up active rooms
-                if pin in active_rooms:
-                    del active_rooms[pin]
+                if pin in active_rooms: del active_rooms[pin]
 
             elif action == "LEAVE":
-                # Participant wants to leave the room
                 if client_role != "participant": continue
-                logging.info(f"Player {username} meninggalkan room {pin}")
-
                 room_id = get_room_id(pin)
                 if room_id:
                     db = get_db()
                     cursor = db.cursor()
                     cursor.execute("DELETE FROM players WHERE room_id=%s AND username=%s", (room_id, username))
-                    db.commit()
-                    cursor.close()
-                    db.close()
+                    db.commit(); cursor.close(); db.close()
                 
-                # Remove from active room and notify host
                 if pin in active_rooms:
                     room = active_rooms[pin]
-                    if username in room["players"]:
-                        del room["players"][username]
-                    if room["host"]:
-                        await safe_send(room["host"], f"PLAYER_LEFT;{pin};{username};-")
+                    if username in room["players"]: del room["players"][username]
+                    if room["host"]: await safe_send(room["host"], f"PLAYER_LEFT;{pin};{username};-")
 
             elif action == "PING":
                 room_id = get_room_id(pin)
@@ -536,6 +455,72 @@ async def handle_client(websocket):
                     cursor.execute("UPDATE players SET is_active=TRUE WHERE room_id=%s AND username=%s", (room_id, username))
                     db.commit(); cursor.close(); db.close()
 
+            # ==========================================================
+            # ADDITIONAL ACTION: SCREEN SHARING & WEBRTC SIGNALING
+            # ==========================================================
+            elif action == "SHARE_STATE":
+                status = payload  # "STARTED" atau "STOPPED"
+                room = active_rooms.get(pin)
+                if room:
+                    # Distribusikan status perubahan share screen ke semua user
+                    await broadcast_all(pin, f"SHARE_STATE_CHANGED;{pin};{username};{status}")
+                    
+                    # Jika baru dimulai, berikan target list ke pengirim agar bisa melakukan P2P handshake
+                    if status == "STARTED":
+                        targets = []
+                        if client_role == "participant" and room["host"]:
+                            targets.append("HOST")
+                        for p_name in room["players"].keys():
+                            if p_name != username:
+                                targets.append(p_name)
+                        await safe_send(websocket, f"SHARE_TARGETS;{pin};SERVER;{','.join(targets)}")
+
+            elif action == "ALLOW_SHARE":
+                if client_role != "host": continue
+                target_student, status_val = payload.split("|")  # status_val: "1"=Izinkan, "0"=Cabut
+                room = active_rooms.get(pin)
+                if room and target_student in room["players"]:
+                    perm_str = "ALLOWED" if status_val == "1" else "DENIED"
+                    await safe_send(room["players"][target_student], f"SHARE_PERMISSION;{pin};SERVER;{perm_str}")
+
+            elif action == "RTC_SIGNAL":
+                # Router Sinyal WebRTC (Format Payload: sig_type|target_user|sig_data)
+                sig_type, target_user, sig_data = payload.split("|", 2)
+                room = active_rooms.get(pin)
+                if room:
+                    out_msg = f"RTC_SIGNAL;{pin};{username};{sig_type}|{sig_data}"
+                    if target_user == "HOST":
+                        if room["host"]: await safe_send(room["host"], out_msg)
+                    elif target_user in room["players"]:
+                        await safe_send(room["players"][target_user], out_msg)
+            elif action == "SEND_REACTION":
+                # Meneruskan emoji ke seluruh pasang mata di room (termasuk Host)
+                await broadcast_all(pin, f"REACTION_TRIGGERED;{pin};{username};{payload}")
+
+            elif action == "RAISE_HAND":
+                # Meneruskan status angkat tangan ("1"=naik, "0"=turun)
+                await broadcast_all(pin, f"PLAYER_HAND_STATE;{pin};{username};{payload}")
+
+            elif action == "CLICKER_HIT":
+                if client_role != "participant": continue
+                room_id = get_room_id(pin)
+                db = get_db()
+                cursor = db.cursor(dictionary=True)
+                cursor.execute("SELECT id, score FROM players WHERE room_id=%s AND username=%s", (room_id, username))
+                player = cursor.fetchone()
+                
+                if player:
+                    # Memberikan bonus +5 poin instan karena berhasil fokus
+                    new_score = player["score"] + 5
+                    cursor.execute("UPDATE players SET score=%s WHERE id=%s", (new_score, player["id"]))
+                    db.commit()
+                    
+                    # Kirim konfirmasi skor baru ke user dan broadcast pembaruan leaderboard
+                    await safe_send(websocket, f"CLICKER_SUCCESS;{pin};SERVER;{new_score}")
+                    leaderboard_payload = build_leaderboard(pin)
+                    await broadcast_all(pin, f"LEADERBOARD_DATA;{pin};SERVER;{leaderboard_payload}")
+                    
+                cursor.close(); db.close()
     except websockets.exceptions.ConnectionClosed:
         pass
     finally:
@@ -560,9 +545,7 @@ async def timeout_cleaner():
             db = get_db()
             cursor = db.cursor()
             cursor.execute("UPDATE players SET is_active=FALSE WHERE TIMESTAMPDIFF(SECOND, last_ping, NOW()) > 90")
-            db.commit()
-            cursor.close()
-            db.close()
+            db.commit(); cursor.close(); db.close()
         except: pass
         await asyncio.sleep(60)
 

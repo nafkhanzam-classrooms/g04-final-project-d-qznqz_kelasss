@@ -1,188 +1,341 @@
+/* ==========================================================
+   🎨 DESIGN SYSTEM & VARIABLES (Modern Clean Aesthetic)
+   ========================================================== */
 :root {
-    --primary: #013880;
-    --primary-light: #024caa;
-    --accent: #f39c12;
-    --bg: #f0f4f8;
+    --primary: #024caa;
+    --primary-light: #0ea5e9;
+    --primary-dark: #0f172a;
+    --accent: #f59e0b;
+    --bg-gradient: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
     --card-bg: #ffffff;
-    --text: #2c3e50;
+    --text-main: #1e293b;
+    --text-muted: #64748b;
+    --border-color: #cbd5e1;
     
-    /* Warna Tombol Kuis (Khas Kahoot/Quizizz) */
-    --red: #e21b3c;
-    --blue: #1368ce;
-    --yellow: #d89e00;
-    --green: #26890c;
+    /* 3D Tactile Colors untuk Tombol Kuis (Kahoot/Quizizz Inspired) */
+    --red: #ef4444;
+    --red-dark: #b91c1c;
+    --blue: #3b82f6;
+    --blue-dark: #1d4ed8;
+    --yellow: #f59e0b;
+    --yellow-dark: #b45309;
+    --green: #10b981;
+    --green-dark: #047857;
+    
+    /* Utility Colors */
+    --danger: #ef4444;
+    --danger-hover: #dc2626;
+    --success-bg: #d1fae5;
+    --success-text: #065f46;
+    --warning-bg: #fef3c7;
+    --warning-text: #92400e;
 }
 
+/* ==========================================================
+   RESET & BASE STYLES
+   ========================================================== */
 * {
     box-sizing: border-box;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     margin: 0;
     padding: 0;
+    -webkit-tap-highlight-color: transparent; /* Menghilangkan highlight biru saat di-tap di mobile */
 }
 
 body {
-    background-color: var(--bg);
-    color: var(--text);
+    background: var(--bg-gradient);
+    color: var(--text-main);
     display: flex;
     justify-content: center;
     align-items: center;
     min-height: 100vh;
-    padding: 20px;
+    min-height: -webkit-fill-available; /* Fix untuk mobile browser address bar */
+    padding: 12px;
+    overflow-x: hidden;
 }
 
+/* ==========================================================
+   📦 RESPONSIVE CARD CONTAINER
+   ========================================================== */
 .card {
     background: var(--card-bg);
     max-width: 550px;
     width: 100%;
-    padding: 40px 30px;
-    border-radius: 16px;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+    padding: 24px 16px; /* Padding lebih kecil di mobile device */
+    border-radius: 20px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
     text-align: center;
-    animation: fadeIn 0.5s ease-in-out;
+    animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: max-width 0.3s ease;
 }
 
-h1 { color: var(--primary); margin-bottom: 10px; font-size: 28px; }
-p { color: #7f8c8d; margin-bottom: 25px; }
+/* Typography */
+h1 { 
+    color: var(--primary); 
+    margin-bottom: 8px; 
+    font-size: 24px; 
+    font-weight: 800;
+    letter-spacing: -0.5px;
+}
+h2 { font-size: 20px; font-weight: 700; color: var(--primary-dark); }
+h3 { font-size: 18px; font-weight: 600; margin-bottom: 12px; }
+p { color: var(--text-muted); margin-bottom: 20px; font-size: 14px; line-height: 1.5; }
+hr { border: 0; height: 1px; background: #e2e8f0; margin: 20px 0; }
 
-/* Form & Input */
+/* ==========================================================
+   📋 FORM CONTROLS & INPUTS
+   ========================================================== */
 .form-group {
-    margin-bottom: 15px;
+    margin-bottom: 16px;
     text-align: left;
 }
-label { font-weight: 600; font-size: 14px; color: var(--text); }
-input[type="text"] {
-    width: 100%;
-    padding: 12px 15px;
-    margin-top: 5px;
-    border: 2px solid #cbd5e1;
-    border-radius: 8px;
-    font-size: 16px;
-    transition: all 0.3s;
+label { 
+    font-weight: 600; 
+    font-size: 13px; 
+    color: var(--text-main);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
-input[type="text"]:focus {
+input[type="text"], input[type="number"] {
+    width: 100%;
+    padding: 14px 16px;
+    margin-top: 6px;
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    font-size: 16px;
+    color: var(--text-main);
+    background-color: #f8fafc;
+    transition: all 0.25s ease;
+}
+input[type="text"]:focus, input[type="number"]:focus {
     border-color: var(--primary);
+    background-color: #ffffff;
     outline: none;
-    box-shadow: 0 0 0 3px rgba(1, 56, 128, 0.15);
+    box-shadow: 0 0 0 4px rgba(2, 76, 170, 0.12);
 }
 
-/* Tombol-Tombol */
+/* ==========================================================
+   🔘 BUTTONS STYLE (Tactile & Accessible)
+   ========================================================== */
 .btn {
     width: 100%;
-    padding: 14px;
+    padding: 14px 20px;
     font-size: 16px;
-    font-weight: bold;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: transform 0.1s, background 0.2s;
-    margin-top: 10px;
-    color: white;
-}
-.btn:active { transform: scale(0.98); }
-.btn-primary { background: var(--primary); }
-.btn-primary:hover { background: var(--primary-light); }
-.btn-accent { background: var(--accent); }
-.btn-accent:hover { opacity: 0.9; }
-.btn-danger { background: #e74c3c; }
-
-.divider {
-    margin: 25px 0;
-    position: relative;
-    text-align: center;
-}
-.divider::before {
-    content: "";
-    position: absolute;
-    top: 50%; left: 0; width: 100%; height: 1px;
-    background: #cbd5e1; z-index: 1;
-}
-.divider span {
-    background: var(--card-bg);
-    padding: 0 15px;
-    position: relative;
-    z-index: 2;
-    color: #94a3b8;
-    font-size: 14px;
-}
-
-/* Grid Jawaban Kuis */
-.quiz-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 15px;
-    margin-top: 25px;
-}
-.btn-quiz {
-    padding: 25px 15px;
-    font-size: 18px;
-    color: white;
+    font-weight: 700;
     border: none;
     border-radius: 12px;
     cursor: pointer;
-    font-weight: bold;
-    box-shadow: 0 4px 0 rgba(0,0,0,0.15);
-    transition: all 0.1s;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    margin-top: 10px;
+    color: white;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
 }
-.btn-quiz:active { transform: translateY(4px); box-shadow: none; }
+.btn:active { transform: scale(0.97); }
+
+.btn-primary { background: var(--primary); }
+.btn-primary:hover { background: #023d8a; box-shadow: 0 10px 15px -3px rgba(2, 76, 170, 0.2); }
+
+.btn-accent { background: var(--accent); color: white; }
+.btn-accent:hover { background: #d97706; box-shadow: 0 10px 15px -3px rgba(245, 158, 11, 0.2); }
+
+.btn-danger { background: var(--danger); }
+.btn-danger:hover { background: var(--danger-hover); box-shadow: 0 10px 15px -3px rgba(239, 68, 68, 0.2); }
+
+/* Back Button Layout */
+.back-header { text-align: left; margin-bottom: 16px; }
+.btn-back {
+    background: #e2e8f0;
+    border: none;
+    color: var(--text-main);
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    padding: 8px 14px;
+    border-radius: 8px;
+    transition: all 0.2s;
+}
+.btn-back:hover { background: #cbd5e1; }
+
+/* Divider */
+.divider { margin: 24px 0; position: relative; text-align: center; }
+.divider::before {
+    content: ""; position: absolute; top: 50%; left: 0; width: 100%; height: 1px;
+    background: var(--border-color); z-index: 1;
+}
+.divider span {
+    background: var(--card-bg); padding: 0 16px; position: relative; z-index: 2;
+    color: var(--text-muted); font-size: 13px; font-weight: 600;
+}
+
+/* ==========================================================
+   🎮 RESPONSIVE QUIZ GAMEPLAY GRID (The Core Fix)
+   ========================================================== */
+.quiz-grid {
+    display: grid;
+    grid-template-columns: 1fr; /* Standar mobile: 1 kolom menumpuk vertikal */
+    gap: 12px;
+    margin-top: 20px;
+}
+
+.btn-quiz {
+    width: 100%;
+    padding: 20px 16px;
+    font-size: 16px;
+    color: white;
+    border: none;
+    border-radius: 16px;
+    cursor: pointer;
+    font-weight: 700;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    transition: filter 0.15s ease, transform 0.1s ease;
+    position: relative;
+    box-shadow: inset 0 -5px 0 rgba(0, 0, 0, 0.24), 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+.btn-quiz:active {
+    transform: translateY(3px);
+    box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.24), 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+.btn-quiz:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+/* Variasi Warna Tombol Kuis */
 .q-red { background: var(--red); }
 .q-blue { background: var(--blue); }
 .q-yellow { background: var(--yellow); }
 .q-green { background: var(--green); }
 
-/* List Pemain di Lobby */
-.player-list {
-    list-style: none;
-    margin: 20px 0;
-    max-height: 200px;
-    overflow-y: auto;
+/* ==========================================================
+   🖥️ RESPONSIVE WEBRTC SCREENSHARE CONTAINER
+   ========================================================== */
+#screenshare-container {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
 }
+#remote-screen-video {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 9; /* Menjaga aspek rasio konstan agar tidak distorsi */
+    object-fit: contain;
+    background-color: #000000;
+}
+
+/* ==========================================================
+   📋 DATA LISTS & FEED (Lobby, Activity, Leaderboard)
+   ========================================================== */
+.player-list, #live-activity-list, #temp-leaderboard-list {
+    list-style: none;
+    margin: 16px 0;
+    max-height: 220px;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+/* Custom Scrollbar untuk kontainer list */
+.player-list::-webkit-scrollbar, 
+#live-activity-list::-webkit-scrollbar, 
+#temp-leaderboard-list::-webkit-scrollbar {
+    width: 6px;
+}
+.player-list::-webkit-scrollbar-thumb, 
+#live-activity-list::-webkit-scrollbar-thumb, 
+#temp-leaderboard-list::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 10px;
+}
+
 .player-list li {
     background: #f8fafc;
-    padding: 12px;
+    padding: 14px 16px;
     margin-bottom: 8px;
-    border-radius: 8px;
+    border-radius: 10px;
     border-left: 4px solid var(--primary);
     text-align: left;
     font-weight: 600;
-    animation: slideIn 0.3s ease-out;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    animation: slideIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Animasi */
+#live-activity-list li, #temp-leaderboard-list li, #participant-temp-list li {
+    background: #ffffff;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+    border-radius: 8px;
+    font-size: 13.5px;
+    font-weight: 500;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02), 0 1px 2px rgba(0,0,0,0.03);
+    border: 1px solid #e2e8f0;
+}
+
+/* Scoring Info Box (Leaderboard Akhir) */
+.scoring-info {
+    background: #f8fafc;
+    padding: 16px;
+    border-radius: 14px;
+    margin-bottom: 20px;
+    font-size: 13px;
+    text-align: left;
+    border-left: 4px solid var(--accent);
+    border-top: 1px solid #e2e8f0;
+    border-right: 1px solid #e2e8f0;
+    border-bottom: 1px solid #e2e8f0;
+}
+.scoring-info h4 { margin-bottom: 8px; color: var(--primary-dark); font-weight: 700; }
+.scoring-info p { margin: 6px 0; line-height: 1.4; color: var(--text-main); }
+
+/* ==========================================================
+   ✨ ANIMATIONS
+   ========================================================== */
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(20px); }
+    from { opacity: 0; transform: translateY(16px); }
     to { opacity: 1; transform: translateY(0); }
 }
 @keyframes slideIn {
-    from { opacity: 0; transform: translateX(-10px); }
+    from { opacity: 0; transform: translateX(-12px); }
     to { opacity: 1; transform: translateX(0); }
 }
-/* Tambahan Style untuk Tombol Back */
-.back-header {
-    text-align: left;
-    margin-bottom: 15px;
-}
-.btn-back {
-    background: none;
-    border: none;
-    color: #7f8c8d;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    padding: 5px 10px;
-    border-radius: 5px;
-    transition: 0.2s;
-}
-.btn-back:hover {
-    background: #e2e8f0;
-    color: var(--primary);
+
+/* ==========================================================
+   📱 MEDIA QUERIES (BREAKPOINTS UNTUK SCREEN LEBIH BESAR)
+   ========================================================== */
+
+/* Tablet Device ke atas (Lebar layar mulai dari 550px) */
+@media (min-width: 550px) {
+    body { padding: 24px; }
+    .card { padding: 40px; }
+    h1 { font-size: 32px; }
+    
+    /* Grid Jawaban Berubah Menjadi 2 Kolom (Kahoot Grid Style) */
+    .quiz-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+    }
+    .btn-quiz {
+        padding: 26px 20px;
+        font-size: 18px;
+    }
 }
 
-/* List Data Live */
-#live-activity-list li, #temp-leaderboard-list li {
-    background: #ffffff;
-    padding: 8px 12px;
-    margin-bottom: 8px;
-    border-radius: 6px;
-    font-size: 14px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+/* Desktop Wide Device (Lebar layar khusus halaman kuis/host-space yang disetting inline max-width:800px) */
+@media (min-width: 768px) {
+    .card[style*="max-width:800px"], .card[style*="max-width: 800px"] {
+        max-width: 850px !important;
+    }
+    
+    /* Layout Fleksibel Berdampingan Khusus Dashboard Kontrol Host */
+    .card #host-quiz-space > div[style*="display: flex"] {
+        flex-direction: row !important;
+        gap: 24px !important;
+    }
 }
