@@ -30,14 +30,14 @@ def calculate_points(answer_time_ms: int, is_correct: bool, timer_seconds: int =
     if not is_correct:
         return 0
     
-    base_points = timer_seconds * 3
+    base_points = 250
     time_seconds = answer_time_ms / 1000
     
     if time_seconds <= 3:
         return base_points
     else:
         points = base_points - int(time_seconds - 3)
-        return max(0, points)
+        return max(100, points)
 
 def calculate_streak_multiplier(streak: int) -> float:
     if streak <= 0:

@@ -12,28 +12,27 @@ The QuITS platform now features a comprehensive gamification system with three m
 
 ## 🎯 Point System
 
-### Base Points: 3 × Timer Setting
+### Base Points: 250
 
 The scoring is based on **how quickly** the player answers:
 
 #### Formula:
 ```
-base_points = timer_seconds × 3
-(Example: 30 second timer = 90 max points)
+base_points = 250
 
 If answer_time ≤ 3 seconds:
   points = base_points
 
 If answer_time > 3 seconds:
   points = base_points - (answer_time - 3)
-  minimum = 0 points
+  minimum = 100 points
 ```
 
-#### Examples (with 30 second timer = 90 max):
-- ✅ Answer in 1.5 seconds → **90 points**
-- ✅ Answer in 3.0 seconds → **90 points**
-- ✅ Answer in 5.0 seconds → **88 points** (90 - 2)
-- ✅ Answer in 10.0 seconds → **83 points** (90 - 7)
+#### Examples:
+- ✅ Answer in 1.5 seconds → **250 points**
+- ✅ Answer in 3.0 seconds → **250 points**
+- ✅ Answer in 5.0 seconds → **248 points** (250 - 2)
+- ✅ Answer in 10.0 seconds → **243 points** (250 - 7)
 - ❌ Incorrect answer → **0 points**
 
 ---
@@ -50,14 +49,14 @@ multiplier = 1.0 + (streak - 1) × 0.125
 ```
 
 #### Streak Progression:
-| Streak | Multiplier | Example (90 base, 30s timer) |
+| Streak | Multiplier | Example (250 perfect) |
 |--------|------------|-------------------|
-| 1st correct | 1.000× | 90 × 1.000 = 90 pts |
-| 2nd correct | 1.125× | 90 × 1.125 = 101 pts |
-| 3rd correct | 1.250× | 90 × 1.250 = 112 pts |
-| 4th correct | 1.375× | 90 × 1.375 = 123 pts |
-| 5th correct | 1.500× | 90 × 1.500 = 135 pts |
-| 10th correct | 2.125× | 90 × 2.125 = 191 pts |
+| 1st correct | 1.000× | 250 × 1.000 = 250 pts |
+| 2nd correct | 1.125× | 250 × 1.125 = 281 pts |
+| 3rd correct | 1.250× | 250 × 1.250 = 312 pts |
+| 4th correct | 1.375× | 250 × 1.375 = 343 pts |
+| 5th correct | 1.500× | 250 × 1.500 = 375 pts |
+| 10th correct | 2.125× | 250 × 2.125 = 531 pts |
 
 #### Streak Reset:
 - ❌ Incorrect answer → **Streak resets to 0**
