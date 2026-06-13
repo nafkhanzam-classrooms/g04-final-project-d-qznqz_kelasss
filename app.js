@@ -405,8 +405,13 @@ function onShowQuestion(payload) {
     document.getElementById("meme-image").style.display = "none";
     document.getElementById("answer-feedback").innerHTML = "";
 
+    // Nyalakan kembali semua tombol kuis
+    ["btnA","btnB","btnC","btnD"].forEach(id => {
+        const btn = document.getElementById(id);
+        if(btn) btn.disabled = false;
+    });
+    
     if(getRole() === "participant") {
-        // PERBAIKAN: Mengganti .style.block menjadi .style.display
         document.getElementById("participant-quiz-space").style.display = "block"; 
     } else {
         document.getElementById("host-quiz-space").style.display = "block";
