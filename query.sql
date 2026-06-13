@@ -50,8 +50,6 @@ CREATE TABLE answers (
     FOREIGN KEY(question_id) REFERENCES questions(id) ON DELETE CASCADE
 );
 
-drop database quiz_db
-
 -- soal
 INSERT INTO questions
 (question_text, option_a, option_b, option_c, option_d, correct_answer)
