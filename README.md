@@ -1,8 +1,8 @@
 # 🏆 QuITS - Quiz Interactive Time-bound System
 
 > 🔗 **Tautan Penting:**
-> * **▶️ Demo Aplikasi:** [Tonton Video Demo QuITS di Sini](https://www.google.com/search?q=%23masukkan-link-demo-aplikasi-di-sini)
-> * **📁 Google Drive:** [Akses Dokumen dan Aset di Sini](https://www.google.com/search?q=%23masukkan-link-google-drive-di-sini)
+> * **▶️ Demo Aplikasi:** [Tonton Video Demo QuITS di Sini]([https://www.google.com/search?q=%23masukkan-link-demo-aplikasi-di-sini](https://drive.google.com/file/d/1CG5Y6sPvTNF7rPEhVIwfVn2PZslQuIwX/view?usp=sharing))
+> * **📁 Google Drive:** [Akses Dokumen dan Aset di Sini]([https://www.google.com/search?q=%23masukkan-link-google-drive-di-sini](https://drive.google.com/drive/folders/1BQPRhWQqRfEDHb5e9xqcQbQ1jEJZTnP7?usp=sharing))
 > 
 > 
 
