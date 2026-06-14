@@ -87,7 +87,7 @@ def get_room_id(pin):
 def get_room_status(pin):
     db = get_db()
     cursor = db.cursor(dictionary=True)
-    cursor.execute("SELECT status, current_question_index, num_questions, timer_seconds FROM rooms WHERE pin=%s", (pin,))
+    cursor.execute("SELECT status, current_question_index FROM rooms WHERE pin=%s", (pin,))
     room = cursor.fetchone()
     cursor.close()
     db.close()
@@ -166,7 +166,7 @@ def delete_room_from_db(pin):
 def restore_rooms_from_db():
     db = get_db()
     cursor = db.cursor(dictionary=True)
-    cursor.execute("SELECT pin, status, current_question_index, num_questions, timer_seconds FROM rooms WHERE status != 'ended'")
+    cursor.execute("SELECT pin, status, current_question_index FROM rooms WHERE status != 'ended'")
     rooms = cursor.fetchall()
     cursor.close()
     db.close()
@@ -176,8 +176,6 @@ def restore_rooms_from_db():
             "host": None,
             "players": {},
             "current_question_index": room["current_question_index"],
-            "num_questions": room["num_questions"],
-            "timer_seconds": room["timer_seconds"],
             "question_timestamp": 0
         }
     logging.info(f"{len(rooms)} room dipulihkan dari database")
@@ -192,6 +190,14 @@ async def send_question_to_room(pin, index):
     
     payload = f"{index}|{question['question_text']}|{question['option_a']}|{question['option_b']}|{question['option_c']}|{question['option_d']}|{question_timestamp}"
     await broadcast_all(pin, f"SHOW_QUESTION;{pin};SERVER;{payload}")
+
+    if index >= get_total_questions() - 1:
+        room = active_rooms.get(pin)
+        if room and room.get("host"):
+            await safe_send(
+                room["host"],
+                f"LAST_QUESTION;{pin};SERVER;-"
+            )
     return True
 
 # ==========================================================
@@ -214,14 +220,14 @@ async def handle_client(websocket):
                 token = generate_token()
                 db = get_db()
                 cursor = db.cursor()
-                cursor.execute("INSERT INTO rooms (pin, status, current_question_index, num_questions, timer_seconds) VALUES (%s, 'waiting', 0, 5, 30)", (room_pin,))
+                cursor.execute("INSERT INTO rooms (pin, status, current_question_index) VALUES (%s, 'waiting', 0)", (room_pin,))
                 room_id = cursor.lastrowid
                 cursor.execute("INSERT INTO players (room_id, username, role, session_token) VALUES (%s, %s, 'host', %s)", (room_id, username, token))
                 db.commit()
                 cursor.close()
                 db.close()
 
-                active_rooms[room_pin] = {"status": "waiting", "host": websocket, "players": {}, "current_question_index": 0, "num_questions": 5, "timer_seconds": 30, "question_timestamp": 0}
+                active_rooms[room_pin] = {"status": "waiting", "host": websocket, "players": {}, "current_question_index": 0, "question_timestamp": 0}
                 client_pin, client_username, client_role = room_pin, username, "host"
 
                 await safe_send(websocket, f"ROOM_CREATED;{room_pin};{username};{token}")
@@ -274,7 +280,7 @@ async def handle_client(websocket):
                     db.close()
 
                     client_pin, client_username, client_role = pin, username, role
-                    if pin not in active_rooms: active_rooms[pin] = {"status": "started", "host": None, "players": {}, "current_question_index": 0, "num_questions": 5, "timer_seconds": 30, "question_timestamp": 0}
+                    if pin not in active_rooms: active_rooms[pin] = {"status": "started", "host": None, "players": {}, "current_question_index": 0, "question_timestamp": 0}
                     
                     if role == "host": active_rooms[pin]["host"] = websocket
                     else: active_rooms[pin]["players"][username] = websocket
@@ -285,8 +291,6 @@ async def handle_client(websocket):
                     if room_state and room_state["status"] == "started":
                         await safe_send(websocket, f"QUIZ_STARTED;{pin};SERVER;-")
                         active_rooms[pin]["current_question_index"] = room_state["current_question_index"]
-                        active_rooms[pin]["num_questions"] = room_state.get("num_questions", 5)
-                        active_rooms[pin]["timer_seconds"] = room_state.get("timer_seconds", 30)
                         active_rooms[pin]["question_timestamp"] = int(time.time() * 1000)
                         q = get_question(room_state["current_question_index"])
                         if q:
@@ -307,20 +311,15 @@ async def handle_client(websocket):
             elif action == "START_QUIZ":
                 if client_role != "host": continue
                 settings = payload.split("|") if payload != "-" else []
-                num_questions = int(settings[0]) if len(settings) > 0 else 5
-                timer_seconds = int(settings[1]) if len(settings) > 1 else 30
                 
                 db = get_db()
                 cursor = db.cursor()
-                cursor.execute("UPDATE rooms SET status='started', current_question_index=0, num_questions=%s, timer_seconds=%s WHERE pin=%s", 
-                              (num_questions, timer_seconds, pin))
+                cursor.execute("UPDATE rooms SET status='started', current_question_index=0 WHERE pin=%s", (pin,))
                 db.commit()
                 cursor.close(); db.close()
                 
                 active_rooms[pin]["status"] = "started"
                 active_rooms[pin]["current_question_index"] = 0
-                active_rooms[pin]["num_questions"] = num_questions
-                active_rooms[pin]["timer_seconds"] = timer_seconds
                 active_rooms[pin]["question_timestamp"] = int(time.time() * 1000)
                 
                 await broadcast_all(pin, f"QUIZ_STARTED;{pin};SERVER;-")
@@ -396,7 +395,7 @@ async def handle_client(websocket):
                 await asyncio.sleep(5)
                 
                 next_index = room["current_question_index"] + 1
-                num_questions = room.get("num_questions", 5)
+                num_questions = num_questions = get_total_questions()
 
                 if next_index >= num_questions:
                     final_payload = build_final_leaderboard(pin)

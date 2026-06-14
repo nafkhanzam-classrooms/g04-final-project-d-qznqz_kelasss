@@ -139,6 +139,7 @@ function handleServerMessage(event) {
         case "LEADERBOARD_DATA": onLeaderboardData(payload); break;
         case "TEMP_LEADERBOARD": onTempLeaderboard(payload); break; 
         case "FINAL_LEADERBOARD": onFinalLeaderboard(payload); break;
+        case "LAST_QUESTION": hideNextQuestionButton(); break;
         case "QUIZ_ENDED": onQuizEnded(); break;
         // Masukkan case baru ini ke dalam fungsi handleServerMessage asli milikmu:
         case "REACTION_TRIGGERED": showFloatingReaction(sender, payload); break;
@@ -327,15 +328,7 @@ function handleStartQuiz() {
     if(getRole() !== "host") return;
     if(lobbyPlayers.length === 0) return alert("Minimal 1 peserta harus bergabung sebelum memulai kuis");
     
-    const numQuestions = parseInt(document.getElementById("num-questions")?.value) || 5;
-    const timerSeconds = parseInt(document.getElementById("timer-seconds")?.value) || 30;
-    
-    if(numQuestions < 1) return alert("Jumlah soal minimal 1");
-    if(timerSeconds < 5) return alert("Timer minimal 5 detik");
-    
-    sessionStorage.setItem("numQuestions", numQuestions);
-    sessionStorage.setItem("timerSeconds", timerSeconds);
-    sendPacket("START_QUIZ", getPin(), getUsername(), `${numQuestions}|${timerSeconds}`);
+    sendPacket("START_QUIZ", getPin(), getUsername());
 }
 
 // ==========================================
@@ -359,6 +352,7 @@ async function initQuizPage() {
     startHeartbeat();
     if(getRole() === "host") {
         document.getElementById("host-quiz-space").style.display = "block";
+        document.getElementById("next-question-btn").style.display = "inline-block";
     } else {
         document.getElementById("participant-quiz-space").style.display = "block";
     }
@@ -516,6 +510,11 @@ function handleNextQuestion() {
         transitionLock = false;
         if(btn) btn.disabled = false;
     }, 6000);
+}
+
+function hideNextQuestionButton() {
+    const btn = document.getElementById("next-question-btn");
+    if (btn) btn.style.display = "none";
 }
 
 function handleEndQuiz() {

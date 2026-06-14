@@ -7,8 +7,6 @@ CREATE TABLE rooms (
     status ENUM('waiting','started','ended')
         DEFAULT 'waiting',
     current_question_index INT DEFAULT 0,
-    num_questions INT DEFAULT 5,
-    timer_seconds INT DEFAULT 30,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
