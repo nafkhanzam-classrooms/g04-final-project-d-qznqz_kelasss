@@ -571,7 +571,7 @@ function initLeaderboardPage() {
         if(memeImg) memeImg.style.display = 'none';
         if(scoreBox) scoreBox.style.display = 'none';
     } else {
-        if(memeImg) memeImg.src = `assets/leaderboard/leaderboard${Math.floor(Math.random()*4)+1}.jpg`;
+        if(memeImg) memeImg.src = `assets/leaderboard/leaderboard1.jpg`;
     }
 
     const container = document.getElementById("leaderboard-list");
