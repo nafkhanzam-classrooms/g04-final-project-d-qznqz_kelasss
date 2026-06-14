@@ -93,6 +93,23 @@ def get_room_status(pin):
     db.close()
     return room
 
+def get_question_started_at(pin):
+    db = get_db()
+    cursor = db.cursor()
+
+    cursor.execute("""
+    SELECT question_started_at
+    FROM rooms
+    WHERE pin=%s
+    """, (pin,))
+
+    row = cursor.fetchone()
+
+    cursor.close()
+    db.close()
+
+    return row[0] if row else None
+
 def get_question(index):
     db = get_db()
     cursor = db.cursor(dictionary=True)
@@ -188,6 +205,19 @@ async def send_question_to_room(pin, index):
     if pin in active_rooms:
         active_rooms[pin]["question_timestamp"] = question_timestamp
     
+    db = get_db()
+    cursor = db.cursor()
+
+    cursor.execute("""
+    UPDATE rooms
+    SET question_started_at = NOW()
+    WHERE pin=%s
+    """, (pin,))
+
+    db.commit()
+    cursor.close()
+    db.close()
+    
     payload = f"{index}|{question['question_text']}|{question['option_a']}|{question['option_b']}|{question['option_c']}|{question['option_d']}|{question_timestamp}"
     await broadcast_all(pin, f"SHOW_QUESTION;{pin};SERVER;{payload}")
 
@@ -236,6 +266,15 @@ async def handle_client(websocket):
             elif action == "JOIN":
                 if pin not in active_rooms:
                     await safe_send(websocket, f"ERROR;{pin};SERVER;Room tidak ditemukan")
+                    continue
+
+                room = active_rooms[pin]
+
+                if room["status"] != "waiting":
+                    await safe_send(
+                        websocket,
+                        f"ERROR;{pin};SERVER;Kuis sudah dimulai"
+                    )
                     continue
                 
                 room_id = get_room_id(pin)
@@ -288,14 +327,24 @@ async def handle_client(websocket):
                     await safe_send(websocket, f"RESUME_SUCCESS;{pin};{username};{role}")
                     
                     room_state = get_room_status(pin)
+
                     if room_state and room_state["status"] == "started":
+
+                        question_ts = active_rooms[pin]["question_timestamp"]
+
                         await safe_send(websocket, f"QUIZ_STARTED;{pin};SERVER;-")
+
                         active_rooms[pin]["current_question_index"] = room_state["current_question_index"]
-                        active_rooms[pin]["question_timestamp"] = int(time.time() * 1000)
+
                         q = get_question(room_state["current_question_index"])
+
                         if q:
-                            pq = f"{room_state['current_question_index']}|{q['question_text']}|{q['option_a']}|{q['option_b']}|{q['option_c']}|{q['option_d']}|{active_rooms[pin]['question_timestamp']}"
-                            await safe_send(websocket, f"SHOW_QUESTION;{pin};SERVER;{pq}")
+                            pq = f"{room_state['current_question_index']}|{q['question_text']}|{q['option_a']}|{q['option_b']}|{q['option_c']}|{q['option_d']}|{question_ts}"
+
+                            await safe_send(
+                                websocket,
+                                f"SHOW_QUESTION;{pin};SERVER;{pq}"
+                            )
                 else:
                     cursor.close(); db.close()
 

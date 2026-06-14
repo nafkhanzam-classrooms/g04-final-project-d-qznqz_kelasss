@@ -7,6 +7,7 @@ CREATE TABLE rooms (
     status ENUM('waiting','started','ended')
         DEFAULT 'waiting',
     current_question_index INT DEFAULT 0,
+    question_started_at DATETIME NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
