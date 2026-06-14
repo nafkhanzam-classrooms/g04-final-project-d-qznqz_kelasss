@@ -475,14 +475,14 @@ function onAnswerResult(payload) {
             <p style="margin: 10px 0; font-weight: bold; font-size: 24px; color: var(--green);">+${streakBonus} 🔥</p>
             <p style="margin: 5px 0; font-size: 14px; color: var(--primary);">Streak: ${streak}</p>
         `;
-        meme.src = `assets/correct/correct${Math.floor(Math.random()*3)+1}.jpg`;
+        meme.src = `assets/correct/correct${Math.floor(Math.random()*25)+1}.jpg`;
     } else {
         feedback.innerHTML = `
             <h3 style="color:var(--red);">❌ Salah!</h3>
             <p style="margin: 10px 0; font-weight: bold; font-size: 24px; color: var(--red);">+0 pts</p>
             <p style="margin: 5px 0; font-size: 14px; color: #e74c3c;">Streak reset</p>
         `;
-        meme.src = `assets/wrong/wrong${Math.floor(Math.random()*3)+1}.jpg`;
+        meme.src = `assets/wrong/wrong${Math.floor(Math.random()*25)+1}.jpg`;
     }
     meme.style.display = "block";
 }
@@ -571,7 +571,7 @@ function initLeaderboardPage() {
         if(memeImg) memeImg.style.display = 'none';
         if(scoreBox) scoreBox.style.display = 'none';
     } else {
-        if(memeImg) memeImg.src = `assets/leaderboard/leaderboard${Math.floor(Math.random()*3)+1}.jpg`;
+        if(memeImg) memeImg.src = `assets/leaderboard/leaderboard${Math.floor(Math.random()*4)+1}.jpg`;
     }
 
     const container = document.getElementById("leaderboard-list");
